@@ -1,3 +1,4 @@
+
 :root {
   --blue-950: #07172f;
   --blue-900: #0f2548;
@@ -145,3 +146,4 @@ input, textarea { width: 100%; padding: 13px 14px; border: 1px solid var(--slate
   .page-section { padding: 82px 20px; }
   .hero { padding-top: 128px; }
 }
+
