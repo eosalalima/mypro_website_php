@@ -1,6 +1,6 @@
 # MyPro Corporate Website and CMS
 
-Production-oriented corporate website for **Myprofessional Solutions, Inc.**, built as a single Laravel 12 application with Vue 3, TypeScript, Inertia.js, Vite, and Tailwind CSS.
+Production-oriented corporate website targeting PHP 8.2.12 for **Myprofessional Solutions, Inc.**, built as a single Laravel 12 application with Vue 3, TypeScript, Inertia.js, Vite, and Tailwind CSS.
 
 ## Features
 
@@ -13,7 +13,7 @@ Production-oriented corporate website for **Myprofessional Solutions, Inc.**, bu
 
 ## Requirements
 
-PHP 8.3+, Composer 2, Node.js 20+, npm, and MySQL 8/MariaDB 10.6+ (SQLite is supported locally).
+PHP 8.2.12, Composer 2, Node.js 20+, npm, and MySQL 8/MariaDB 10.6+ (SQLite is supported locally).
 
 ## Local installation
 
