@@ -1,4 +1,0 @@
-<?php
-namespace Tests\Feature;
-use Illuminate\Foundation\Testing\RefreshDatabase; use Illuminate\Support\Facades\Mail; use Tests\TestCase;
-class InquiryTest extends TestCase {use RefreshDatabase; public function test_inquiry_validation():void{$this->post('/contact',[])->assertSessionHasErrors(['full_name','email','phone','subject','message','consent']);} public function test_valid_inquiry_is_stored():void{Mail::fake();$this->post('/contact',['full_name'=>'Maria Santos','company_name'=>'Example Co','email'=>'maria@example.com','phone'=>'+63 900 000 0000','service'=>'Cybersecurity','subject'=>'Security consultation','message'=>'We would like to discuss endpoint security for our organization.','consent'=>true,'website'=>''])->assertRedirect();$this->assertDatabaseHas('inquiries',['email'=>'maria@example.com','status'=>'new']);}}
