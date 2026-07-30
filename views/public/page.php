@@ -1,0 +1,1 @@
+<section class="page-hero"><div class="container"><p class="eyebrow"><?=e($eyebrow)?></p><h1><?=e($title)?></h1><p class="lead"><?=e($body)?></p></div></section><section class="section"><div class="container text-sections"><?php foreach($sections as $section):?><article><h2><?=e($section[0])?></h2><p><?=e($section[1])?></p></article><?php endforeach;?></div></section>

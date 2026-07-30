@@ -1,1 +1,0 @@
-<?php return ['default'=>env('CACHE_STORE','database'),'stores'=>['array'=>['driver'=>'array'],'database'=>['driver'=>'database','connection'=>env('DB_CACHE_CONNECTION'),'table'=>env('DB_CACHE_TABLE','cache')],'file'=>['driver'=>'file','path'=>storage_path('framework/cache/data')]],'prefix'=>env('CACHE_PREFIX','mypro_cache')];

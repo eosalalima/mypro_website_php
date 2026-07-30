@@ -1,4 +1,0 @@
-<?php
-namespace App\Http\Controllers;
-use App\Http\Requests\StoreInquiryRequest; use App\Models\Inquiry; use Illuminate\Http\RedirectResponse; use Illuminate\Support\Facades\Mail;
-class InquiryController extends Controller { public function store(StoreInquiryRequest $request):RedirectResponse{$inquiry=Inquiry::create([...$request->safe()->except('website'),'ip_address'=>$request->ip(),'status'=>'new']);Mail::raw("New inquiry from {$inquiry->full_name} ({$inquiry->email})\n\n{$inquiry->message}",fn($m)=>$m->to(env('INQUIRY_NOTIFICATION_EMAIL','sales.myprosolinc@gmail.com'))->subject('New MyPro website inquiry'));Mail::raw('Thank you for contacting MyPro Solutions. Our team will review your inquiry and respond shortly.',fn($m)=>$m->to($inquiry->email)->subject('We received your MyPro inquiry'));return back()->with('success','Thank you. Your inquiry has been received.');} }

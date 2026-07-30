@@ -1,9 +1,0 @@
-<?php
-use App\Http\Controllers\Admin\ContentController; use App\Http\Controllers\Admin\DashboardController; use App\Http\Controllers\Admin\InquiryController as AdminInquiryController; use App\Http\Controllers\Auth\AuthenticatedSessionController; use App\Http\Controllers\InquiryController; use App\Http\Controllers\PublicController; use App\Models\Content; use Illuminate\Support\Facades\Route;
-Route::get('/',[PublicController::class,'home'])->name('home');
-Route::get('/contact',[PublicController::class,'contact'])->name('contact'); Route::post('/contact',[InquiryController::class,'store'])->middleware('throttle:5,1')->name('inquiries.store');
-foreach(['services','solutions','industries','projects'] as $type){Route::get("/$type",fn()=>(new PublicController)->listing($type))->name("$type.index");Route::get("/$type/{slug}",fn($slug)=>(new PublicController)->detail($type,$slug))->name("$type.show");}
-Route::get('/sitemap.xml',fn()=>response()->view('sitemap',['items'=>Content::published()->get()],200,['Content-Type'=>'application/xml']));
-Route::middleware('guest')->group(function(){Route::get('/admin/login',[AuthenticatedSessionController::class,'create'])->name('login');Route::post('/admin/login',[AuthenticatedSessionController::class,'store']);});
-Route::middleware(['auth','admin'])->prefix('admin')->name('admin.')->group(function(){Route::get('/',DashboardController::class)->name('dashboard');Route::resource('content',ContentController::class)->except('show');Route::get('inquiries',[AdminInquiryController::class,'index'])->name('inquiries.index');Route::patch('inquiries/{inquiry}',[AdminInquiryController::class,'update'])->name('inquiries.update');Route::post('logout',[AuthenticatedSessionController::class,'destroy'])->name('logout');});
-Route::get('/{slug}',[PublicController::class,'page'])->name('pages.show');
