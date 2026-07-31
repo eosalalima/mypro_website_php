@@ -4,11 +4,11 @@ A responsive corporate website and secure content-management system for **Myprof
 
 ## Included functionality
 
-- Public Home, About, Services, Service Details, Solutions, Industries, sample Case Studies, Contact, Privacy, Terms, and custom 404 pages.
+- Public Home, About, Services, Service Details, Solutions, Industries, sample Case Studies, Contact, Privacy, Terms, and custom 404 pages. The homepage includes solution, industry, delivery-process, clearly labelled sample-work, sample-testimonial, FAQ, and consultation sections.
 - Portfolio-derived descriptions for five core services, capabilities, markets, partner/product contexts, tagline, and contact information.
 - Secure `/admin` login with content create/edit/publish/archive/delete workflows and inquiry triage.
 - Contact form with server validation, CSRF token, honeypot, 30-second session throttle, consent, database storage, IP hashing, and best-effort email notification.
-- SEO titles/descriptions, canonical and Open Graph tags, organization structured data, sitemap, robots policy, semantic landmarks, skip link, visible focus styles, mobile navigation, and reduced-motion support.
+- SEO titles/descriptions, canonical and Open Graph tags, organization structured data, a database-driven XML sitemap, robots policy, semantic landmarks, skip link, visible focus styles, mobile navigation, and reduced-motion support.
 - Cookie notice using local browser storage. No analytics or nonessential cookies are installed.
 
 Unverified project and testimonial records are prominently marked **Sample** and must be replaced or approved before launch.
