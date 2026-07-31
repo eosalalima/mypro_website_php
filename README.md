@@ -61,7 +61,7 @@ There is no asset compilation, npm install, or JavaScript dependency audit becau
 2. The dashboard summarizes content and recent inquiries.
 3. Under **Content**, select a content type. Add or expand an item, edit its copy/SEO fields/order, choose draft/published/archived, and save.
 4. Under **Inquiries**, review messages and change status to new, in progress, resolved, or spam.
-5. Database-level settings hold verified company contacts. Update settings with an authenticated database administration tool and keep backups.
+5. Under **Settings**, update the centralized company name, tagline, telephone numbers, email address, and website shown across public pages.
 
 Uploaded media is intentionally not enabled in this framework-free baseline. Put optimized WebP/AVIF assets in `public/assets`, then reference them in approved templates; validate content type and randomize names if an upload workflow is later enabled.
 
