@@ -1,6 +1,11 @@
 <?php
 declare(strict_types=1);
-require dirname(__DIR__).'/app/bootstrap.php';
+$database = sys_get_temp_dir().'/mypro-tests-'.bin2hex(random_bytes(6)).'.sqlite';
+$_ENV['DB_DSN'] = 'sqlite:'.$database;
+register_shutdown_function(static fn () => is_file($database) && unlink($database));
+ob_start();
+require dirname(__DIR__).'/scripts/install.php';
+ob_end_clean();
 use MyPro\{Content,Database};
 $tests=[];$test=function(string $name,callable $fn)use(&$tests){try{$fn();echo "PASS $name\n";$tests[]=true;}catch(Throwable $e){echo "FAIL $name: {$e->getMessage()}\n";$tests[]=false;}};$assert=function(bool $value,string $message='Assertion failed'){if(!$value)throw new RuntimeException($message);};
 $test('database schema is installed',function()use($assert){$tables=Database::connect()->query("SELECT name FROM sqlite_master WHERE type='table'")->fetchAll(PDO::FETCH_COLUMN);foreach(['users','contents','inquiries','settings'] as $name)$assert(in_array($name,$tables,true),"Missing $name table");});
