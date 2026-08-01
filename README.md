@@ -4,11 +4,11 @@ A responsive corporate website and secure content-management system for **Myprof
 
 ## Included functionality
 
-- Public Home, About, Services, Service Details, Solutions, Industries, sample Case Studies, Contact, Privacy, Terms, and custom 404 pages.
+- Public Home, About, Services, Service Details, Solutions, Industries, sample Case Studies, Contact, Privacy, Terms, and custom 404 pages. The homepage includes solution, industry, delivery-process, clearly labelled sample-work, sample-testimonial, FAQ, and consultation sections.
 - Portfolio-derived descriptions for five core services, capabilities, markets, partner/product contexts, tagline, and contact information.
 - Secure `/admin` login with content create/edit/publish/archive/delete workflows and inquiry triage.
 - Contact form with server validation, CSRF token, honeypot, 30-second session throttle, consent, database storage, IP hashing, and best-effort email notification.
-- SEO titles/descriptions, canonical and Open Graph tags, organization structured data, sitemap, robots policy, semantic landmarks, skip link, visible focus styles, mobile navigation, and reduced-motion support.
+- SEO titles/descriptions, canonical and Open Graph tags, organization structured data, a database-driven XML sitemap, robots policy, semantic landmarks, skip link, visible focus styles, mobile navigation, and reduced-motion support.
 - Cookie notice using local browser storage. No analytics or nonessential cookies are installed.
 
 Unverified project and testimonial records are prominently marked **Sample** and must be replaced or approved before launch.
@@ -24,13 +24,26 @@ Unverified project and testimonial records are prominently marked **Sample** and
 ```bash
 composer install
 cp .env.example .env
-# For local SQLite, set DB_DSN=sqlite:/absolute/path/to/storage/mypro.sqlite
 php scripts/install.php
 php scripts/create-admin.php
 php -S 127.0.0.1:8080 -t public public/router.php
 ```
 
 Before `create-admin.php`, populate `ADMIN_EMAIL` and an `ADMIN_PASSWORD` of at least 12 characters. The installer may also create the initial admin when those variables are already set. No public registration route exists.
+
+The example environment uses `sqlite:storage/mypro.sqlite`, which requires no database username or password. Relative SQLite paths are resolved from the project directory, so the same configuration works with PHP's development server and XAMPP on Windows. Ensure the `pdo_sqlite` extension is enabled.
+
+### MySQL/MariaDB and XAMPP
+
+If you prefer MySQL, create the database and user first; do not use the example username unless that account actually exists. For a default local XAMPP installation that still uses its development-only root account, the relevant `.env` values are commonly:
+
+```dotenv
+DB_DSN="mysql:host=127.0.0.1;port=3306;dbname=mypro;charset=utf8mb4"
+DB_USERNAME=root
+DB_PASSWORD=
+```
+
+Create the `mypro` database in phpMyAdmin, save these values in `.env`, and run `php scripts/install.php` before opening the site. For production, create a dedicated least-privilege database user with a strong password instead of using `root`. An `Access denied for user` message means the username/password in `.env` does not match a MySQL account; it is a database configuration error, not an application login error.
 
 ## Configuration
 
