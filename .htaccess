@@ -1,0 +1,14 @@
+Options -Indexes
+DirectoryIndex disabled
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Permit the real public directory to handle its own front-controller rules.
+    RewriteRule ^public(?:/|$) - [L]
+
+    # XAMPP commonly exposes a project folder below htdocs. Keep application
+    # source private and internally route every request through public/.
+    RewriteRule ^(.*)$ public/$1 [L]
+</IfModule>
+
