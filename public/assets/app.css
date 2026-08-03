@@ -181,7 +181,7 @@ nav > a:hover {
     margin: 0;
     color: #fff;
     font-family: "Dancing Script", cursive;
-    font-size: clamp(60px, 6vw, 92px);
+    font-size: clamp(44px, 4.5vw, 70px);
     font-weight: 400;
     line-height: 1;
     text-align: right;
@@ -877,7 +877,7 @@ td small {
     .hero-tagline {
         right: 20px;
         bottom: 14px;
-        font-size: 52px;
+        font-size: 40px;
     }
     .container {
         width: min(100% - 32px, var(--max));
