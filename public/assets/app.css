@@ -343,6 +343,10 @@ nav > a:hover {
     margin: auto;
     object-fit: contain;
 }
+.logos .cisco-logo {
+    max-width: 148px;
+    height: 52px;
+}
 .section {
     padding: 105px 0;
 }
