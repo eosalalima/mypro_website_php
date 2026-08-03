@@ -320,21 +320,28 @@ nav > a:hover {
     text-align: center;
     border-top: 1px solid var(--line);
     border-bottom: 1px solid var(--line);
-    padding: 24px;
+    padding: 30px 0 32px;
 }
 .logo-band p {
     font-size: 10px;
     text-transform: uppercase;
     letter-spacing: 2px;
     color: #798397;
+    margin: 0 0 24px;
 }
 .logos {
-    display: flex;
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 28px;
     align-items: center;
-    color: #536078;
-    font-size: 18px;
-    filter: grayscale(1);
+}
+.logos img {
+    display: block;
+    width: 100%;
+    max-width: 132px;
+    height: 46px;
+    margin: auto;
+    object-fit: contain;
 }
 .section {
     padding: 105px 0;
@@ -943,8 +950,11 @@ td small {
         display: block;
     }
     .logos {
-        gap: 30px;
-        overflow: hidden;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 24px 36px;
+    }
+    .logos img:last-child {
+        grid-column: 1 / -1;
     }
     .section {
         padding: 70px 0;
