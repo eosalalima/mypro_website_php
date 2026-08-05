@@ -1,50 +1,180 @@
 <?php
+
 declare(strict_types=1);
-require dirname(__DIR__).'/app/bootstrap.php';
-use MyPro\{Auth,Content,Database,Env,View};
-$path=parse_url($_SERVER['REQUEST_URI']??'/',PHP_URL_PATH)?:'/';$method=$_SERVER['REQUEST_METHOD']??'GET';
-$settings=Content::settings();
-$public=function(string $view,array $data=[])use($settings){View::render('public/'.$view,array_merge(['settings'=>$settings],$data));};
-if($path==='/'){ $public('home',['title'=>'IT Solutions That Make Business Simpler','services'=>Content::published('service'),'solutions'=>Content::published('solution',3),'industries'=>Content::published('industry'),'projects'=>Content::published('project',3),'testimonials'=>Content::published('testimonial',3),'faqs'=>Content::published('faq')]); return; }
-if($path==='/sitemap.xml'){
- header('Content-Type: application/xml; charset=UTF-8');
- $urls=['/','/about','/services','/solutions','/industries','/projects','/contact','/privacy','/terms'];
- foreach(['service'=>'services','solution'=>'solutions','industry'=>'industries','project'=>'projects'] as $type=>$section)foreach(Content::published($type) as $item)$urls[]='/'.$section.'/'.$item['slug'];
- echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n";
- foreach($urls as $url)echo '<url><loc>'.e(url($url))."</loc></url>\n";
- echo '</urlset>';return;
+require dirname(__DIR__) . '/app/bootstrap.php';
+
+use MyPro\{Auth, Content, Database, Env, View};
+
+$path = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
+$method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+$settings = Content::settings();
+$public = function (string $view, array $data = []) use ($settings) {
+    View::render('public/' . $view, array_merge(['settings' => $settings], $data));
+};
+if ($path === '/') {
+    $public('home', ['title' => 'IT Solutions That Make Business Simpler', 'services' => Content::published('service'), 'solutions' => Content::published('solution', 3), 'industries' => Content::published('industry'), 'projects' => Content::published('project', 3), 'testimonials' => Content::published('testimonial', 3), 'faqs' => Content::published('faq')]);
+    return;
 }
-if($path==='/about'){ $public('page',['title'=>'About MyPro','eyebrow'=>'Our company','body'=>'Myprofessional Solutions, Inc. is a specialized information technology firm experienced in consultancy and systems integration. From network and server infrastructure, application development and deployment, and the supply of software and hardware peripherals, MyPro has evolved into an integrated IT solutions provider.','banner'=>'/images/About.png','sections'=>[['A consultative approach','We begin with your operational goals, then shape a practical technology path around security, continuity, usability, and growth.'],['Capability across the IT lifecycle','Our portfolio spans infrastructure, cybersecurity, computing devices, managed support, resource deployment, software, and transformation initiatives.'],['Serving the Philippine market','We support large enterprises, SMEs, small offices/home offices, and retail organizations.']]]);return;}
-if(in_array($path,['/privacy','/terms'],true)){ $isPrivacy=$path==='/privacy';$public('page',['title'=>$isPrivacy?'Privacy Policy':'Terms and Conditions','eyebrow'=>'Legal','body'=>$isPrivacy?'This policy explains how inquiry information submitted through this website is collected, used, protected, and retained.':'These terms govern use of the MyPro website and its informational content.','sections'=>$isPrivacy?[['Information we collect','We collect the details you voluntarily submit in an inquiry, together with limited security data used to prevent abuse.'],['How information is used','Information is used to respond to your request, coordinate relevant services, maintain records, and protect the website.'],['Your choices','Contact MyPro to request access, correction, or deletion, subject to legal and operational requirements.']]:[['Website information','Content is general information and is not a binding proposal, warranty, or service agreement.'],['Intellectual property','Brand names and materials belong to their respective owners. Website content may not be reproduced without permission.'],['Contact','Questions about these terms may be sent to the published MyPro email address.']]]);return;}
-$listing=['/services'=>['Services','service','Technology support from foundation to transformation.','/images/Services.png'],'/solutions'=>['Solutions','solution','Integrated answers to important business technology needs.','/images/Solutions.png'],'/industries'=>['Industries','industry','Flexible expertise for organizations of different sizes.','/images/Industries.png'],'/projects'=>['Case Studies','project','Demonstration delivery stories, clearly identified until verified.','/images/Projects.png']];
-if(isset($listing[$path])){[$title,$type,$intro,$banner]=$listing[$path];$public('listing',compact('title','type','intro','banner')+['items'=>Content::published($type)]);return;}
-if(preg_match('#^/(services|solutions|industries|projects)/([a-z0-9-]+)$#',$path,$m)){ $types=['services'=>'service','solutions'=>'solution','industries'=>'industry','projects'=>'project'];$item=Content::find($types[$m[1]],$m[2]);if($item){$detailBanners=['services'=>['it-infrastructure'=>'/images/Services - IT Infrastructure.png','cybersecurity'=>'/images/Services - Cybersecurity.png','computing-devices'=>'/images/Services - Computing Devices.png','managed-services'=>'/images/Services - Managed Services.png','digital-transformation'=>'/images/Services - Digital Transformation.png'],'solutions'=>['hybrid-soc'=>'/images/Solutions - Hybrid Security Operations Center.png','data-center-design-build'=>'/images/Solutions - Data Center & Build.png','enterprise-hcm'=>'/images/Solutions - Enterprise HCM.png'],'projects'=>['sample-network-modernization'=>'/images/Projects - Multi-Site Network Modernization.png']];$banner=$detailBanners[$m[1]][$m[2]]??null;$public('detail',['title'=>$item['title'],'item'=>$item,'section'=>$m[1],'banner'=>$banner]);return;}}
-if($path==='/contact'&&$method==='GET'){ $public('contact',['title'=>'Talk to an IT Expert','services'=>Content::published('service'),'errors'=>[]]);return;}
-if($path==='/contact'&&$method==='POST'){
- verify_csrf();$fields=['full_name','company','email','phone','service','subject','message'];$d=[];foreach($fields as $f)$d[$f]=trim((string)($_POST[$f]??''));$errors=[];
- if($d['full_name']===''||mb_strlen($d['full_name'])>150)$errors['full_name']='Enter your full name.';if(!filter_var($d['email'],FILTER_VALIDATE_EMAIL))$errors['email']='Enter a valid email address.';if($d['subject']===''||mb_strlen($d['subject'])>190)$errors['subject']='Enter a subject.';if(mb_strlen($d['message'])<20||mb_strlen($d['message'])>5000)$errors['message']='Enter a message between 20 and 5,000 characters.';if(empty($_POST['consent']))$errors['consent']='Please agree before submitting.';if(!empty($_POST['website']))$errors['form']='Your submission could not be processed.';
- $last=(int)($_SESSION['last_inquiry']??0);if(time()-$last<30)$errors['form']='Please wait before sending another inquiry.';
- if($errors){$_SESSION['_old']=$d;$public('contact',['title'=>'Talk to an IT Expert','services'=>Content::published('service'),'errors'=>$errors]);return;}
- Database::connect()->prepare('INSERT INTO inquiries(full_name,company,email,phone,service,subject,message,consent,ip_hash) VALUES(?,?,?,?,?,?,?,?,?)')->execute([$d['full_name'],$d['company'],$d['email'],$d['phone'],$d['service'],$d['subject'],$d['message'],1,hash('sha256',($_SERVER['REMOTE_ADDR']??'unknown').Env::get('APP_KEY','local'))]);$_SESSION['last_inquiry']=time();unset($_SESSION['_old']);
- $to=Env::get('INQUIRY_NOTIFICATION_EMAIL',$settings['email']??'');if($to)@mail($to,'Website inquiry: '.$d['subject'],"From: {$d['full_name']} <{$d['email']}>\n\n{$d['message']}",'From: '.Env::get('MAIL_FROM_ADDRESS',$to));flash('success','Thank you. Your inquiry has been received, and our team will be in touch.');redirect('/contact');
+if ($path === '/sitemap.xml') {
+    header('Content-Type: application/xml; charset=UTF-8');
+    $urls = ['/', '/about', '/services', '/solutions', '/industries', '/projects', '/contact', '/privacy', '/terms'];
+    foreach (['service' => 'services', 'solution' => 'solutions', 'industry' => 'industries', 'project' => 'projects'] as $type => $section) foreach (Content::published($type) as $item) $urls[] = '/' . $section . '/' . $item['slug'];
+    echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n";
+    foreach ($urls as $url) echo '<url><loc>' . e(url($url)) . "</loc></url>\n";
+    echo '</urlset>';
+    return;
 }
-if($path==='/admin/login'&&$method==='GET'){if(Auth::user())redirect('/admin');View::render('admin/login',['title'=>'Administrator sign in'],'layouts/admin');return;}
-if($path==='/admin/login'&&$method==='POST'){verify_csrf();if(Auth::attempt((string)($_POST['email']??''),(string)($_POST['password']??'')))redirect('/admin');flash('error','The email address or password is incorrect.');redirect('/admin/login');}
-if($path==='/admin/logout'&&$method==='POST'){verify_csrf();Auth::logout();redirect('/admin/login');}
-$public404=function()use($public){http_response_code(404);$public('404',['title'=>'Page not found']);};
-if(!str_starts_with($path,'/admin')){$public404();return;}
-$user=Auth::requireAdmin();
-if($path==='/admin'){ $title='Dashboard';$counts=Database::connect()->query("SELECT type,COUNT(*) total FROM contents GROUP BY type")->fetchAll();$inquiries=Database::connect()->query("SELECT * FROM inquiries ORDER BY created_at DESC LIMIT 5")->fetchAll();View::render('admin/dashboard',compact('title','counts','inquiries','user'),'layouts/admin');return; }
-if($path==='/admin/content'){ $type=preg_replace('/[^a-z_]/','',(string)($_GET['type']??'service'));$allowed=['service','solution','industry','project','testimonial','faq'];if(!in_array($type,$allowed,true))$type='service';$q=Database::connect()->prepare('SELECT * FROM contents WHERE type=? ORDER BY sort_order,title');$q->execute([$type]);View::render('admin/content',['title'=>'Manage content','items'=>$q->fetchAll(),'type'=>$type,'user'=>$user],'layouts/admin');return; }
-if($path==='/admin/content/save'&&$method==='POST'){verify_csrf();$id=(int)($_POST['id']??0);$type=(string)($_POST['type']??'service');$title=trim((string)($_POST['title']??''));$slug=strtolower(trim(preg_replace('/[^a-z0-9]+/i','-',(string)($_POST['slug']?:$title)),'-'));if($title===''||$slug===''){flash('error','Title and slug are required.');redirect('/admin/content?type='.$type);} $vals=[$type,$title,$slug,trim((string)($_POST['summary']??'')),trim((string)($_POST['body']??'')),in_array($_POST['status']??'draft',['draft','published','archived'],true)?$_POST['status']:'draft',(int)($_POST['sort_order']??0),isset($_POST['is_featured'])?1:0,trim((string)($_POST['meta_title']??'')),trim((string)($_POST['meta_description']??''))];if($id){$vals[]=$id;Database::connect()->prepare('UPDATE contents SET type=?,title=?,slug=?,summary=?,body=?,status=?,sort_order=?,is_featured=?,meta_title=?,meta_description=?,updated_at=CURRENT_TIMESTAMP WHERE id=?')->execute($vals);}else{Database::connect()->prepare('INSERT INTO contents(type,title,slug,summary,body,status,sort_order,is_featured,meta_title,meta_description,published_at) VALUES(?,?,?,?,?,?,?,?,?,?,CURRENT_TIMESTAMP)')->execute($vals);}flash('success','Content saved.');redirect('/admin/content?type='.$type);}
-if($path==='/admin/content/delete'&&$method==='POST'){verify_csrf();Database::connect()->prepare('DELETE FROM contents WHERE id=?')->execute([(int)($_POST['id']??0)]);flash('success','Content deleted.');redirect('/admin/content?type='.urlencode((string)($_POST['type']??'service')));}
-if($path==='/admin/settings'){
- if($method==='POST'){
-  verify_csrf();$fields=['company_name','tagline','phone_primary','phone_secondary','email','website'];$values=[];foreach($fields as $field)$values[$field]=trim((string)($_POST[$field]??''));
-  if($values['company_name']===''||$values['tagline']===''||$values['phone_primary']===''||!filter_var($values['email'],FILTER_VALIDATE_EMAIL)||$values['website']===''){flash('error','Complete all required settings with a valid email address.');redirect('/admin/settings');}
-  $save=Database::connect()->prepare('UPDATE settings SET value=?,updated_at=CURRENT_TIMESTAMP WHERE name=?');foreach($values as $name=>$value)$save->execute([$value,$name]);flash('success','Website settings updated.');redirect('/admin/settings');
- }
- View::render('admin/settings',['title'=>'Website settings','settings'=>Content::settings(),'user'=>$user],'layouts/admin');return;
+if ($path === '/about') {
+    $public('page', ['title' => 'About MyPro', 'eyebrow' => 'Our company', 'body' => 'Myprofessional Solutions, Inc. is a specialized information technology firm experienced in consultancy and systems integration. From network and server infrastructure, application development and deployment, and the supply of software and hardware peripherals, MyPro has evolved into an integrated IT solutions provider.', 'banner' => '/images/About.png', 'sections' => [['A consultative approach', 'We begin with your operational goals, then shape a practical technology path around security, continuity, usability, and growth.'], ['Capability across the IT lifecycle', 'Our portfolio spans infrastructure, cybersecurity, computing devices, managed support, resource deployment, software, and transformation initiatives.'], ['Serving the Philippine market', 'We support large enterprises, SMEs, small offices/home offices, and retail organizations.']]]);
+    return;
 }
-if($path==='/admin/inquiries'){if($method==='POST'){verify_csrf();$status=in_array($_POST['status']??'',['new','in_progress','resolved','spam'],true)?$_POST['status']:'new';Database::connect()->prepare('UPDATE inquiries SET status=?,updated_at=CURRENT_TIMESTAMP WHERE id=?')->execute([$status,(int)$_POST['id']]);flash('success','Inquiry status updated.');redirect('/admin/inquiries');}$items=Database::connect()->query('SELECT * FROM inquiries ORDER BY created_at DESC')->fetchAll();View::render('admin/inquiries',['title'=>'Contact inquiries','items'=>$items,'user'=>$user],'layouts/admin');return;}
+if (in_array($path, ['/privacy', '/terms'], true)) {
+    $isPrivacy = $path === '/privacy';
+    $public('page', ['title' => $isPrivacy ? 'Privacy Policy' : 'Terms and Conditions', 'eyebrow' => 'Legal', 'body' => $isPrivacy ? 'This policy explains how inquiry information submitted through this website is collected, used, protected, and retained.' : 'These terms govern use of the MyPro website and its informational content.', 'sections' => $isPrivacy ? [['Information we collect', 'We collect the details you voluntarily submit in an inquiry, together with limited security data used to prevent abuse.'], ['How information is used', 'Information is used to respond to your request, coordinate relevant services, maintain records, and protect the website.'], ['Your choices', 'Contact MyPro to request access, correction, or deletion, subject to legal and operational requirements.']] : [['Website information', 'Content is general information and is not a binding proposal, warranty, or service agreement.'], ['Intellectual property', 'Brand names and materials belong to their respective owners. Website content may not be reproduced without permission.'], ['Contact', 'Questions about these terms may be sent to the published MyPro email address.']]]);
+    return;
+}
+$listing = ['/services' => ['Services', 'service', 'Technology support from foundation to transformation.', '/images/Services.png'], '/solutions' => ['Solutions', 'solution', 'Integrated answers to important business technology needs.', '/images/Solutions.png'], '/industries' => ['Industries', 'industry', 'Flexible expertise for organizations of different sizes.', '/images/Industries.png'], '/projects' => ['Case Studies', 'project', 'Demonstration delivery stories, clearly identified until verified.', '/images/Projects.png']];
+if (isset($listing[$path])) {
+    [$title, $type, $intro, $banner] = $listing[$path];
+    $public('listing', compact('title', 'type', 'intro', 'banner') + ['items' => Content::published($type)]);
+    return;
+}
+if (preg_match('#^/(services|solutions|industries|projects)/([a-z0-9-]+)$#', $path, $m)) {
+    $types = ['services' => 'service', 'solutions' => 'solution', 'industries' => 'industry', 'projects' => 'project'];
+    $item = Content::find($types[$m[1]], $m[2]);
+    if ($item) {
+        $detailBanners = ['services' => ['it-infrastructure' => '/images/Services - IT Infrastructure.png', 'cybersecurity' => '/images/Services - Cybersecurity.png', 'computing-devices' => '/images/Services - Computing Devices.png', 'managed-services' => '/images/Services - Managed Services.png', 'digital-transformation' => '/images/Services - Digital Transformation.png'], 'solutions' => ['hybrid-soc' => '/images/Solutions - Hybrid Security Operations Center.png', 'data-center-design-build' => '/images/Solutions - Data Center & Build.png', 'enterprise-hcm' => '/images/Solutions - Enterprise HCM.png'], 'projects' => ['sample-network-modernization' => '/images/Projects - Multi-Site Network Modernization.png']];
+        $banner = $detailBanners[$m[1]][$m[2]] ?? null;
+        $public('detail', ['title' => $item['title'], 'item' => $item, 'section' => $m[1], 'banner' => $banner]);
+        return;
+    }
+}
+if ($path === '/contact' && $method === 'GET') {
+    $public('contact', ['title' => 'Talk to an IT Expert', 'services' => Content::published('service'), 'errors' => []]);
+    return;
+}
+if ($path === '/contact' && $method === 'POST') {
+    verify_csrf();
+    $fields = ['full_name', 'company', 'email', 'phone', 'service', 'subject', 'message'];
+    $d = [];
+    foreach ($fields as $f) $d[$f] = trim((string)($_POST[$f] ?? ''));
+    $errors = [];
+    if ($d['full_name'] === '' || mb_strlen($d['full_name']) > 150) $errors['full_name'] = 'Enter your full name.';
+    if (!filter_var($d['email'], FILTER_VALIDATE_EMAIL)) $errors['email'] = 'Enter a valid email address.';
+    if ($d['subject'] === '' || mb_strlen($d['subject']) > 190) $errors['subject'] = 'Enter a subject.';
+    if (mb_strlen($d['message']) < 20 || mb_strlen($d['message']) > 5000) $errors['message'] = 'Enter a message between 20 and 5,000 characters.';
+    if (empty($_POST['consent'])) $errors['consent'] = 'Please agree before submitting.';
+    if (!empty($_POST['website'])) $errors['form'] = 'Your submission could not be processed.';
+    $last = (int)($_SESSION['last_inquiry'] ?? 0);
+    if (time() - $last < 30) $errors['form'] = 'Please wait before sending another inquiry.';
+    if ($errors) {
+        $_SESSION['_old'] = $d;
+        $public('contact', ['title' => 'Talk to an IT Expert', 'services' => Content::published('service'), 'errors' => $errors]);
+        return;
+    }
+    Database::connect()->prepare('INSERT INTO inquiries(full_name,company,email,phone,service,subject,message,consent,ip_hash) VALUES(?,?,?,?,?,?,?,?,?)')->execute([$d['full_name'], $d['company'], $d['email'], $d['phone'], $d['service'], $d['subject'], $d['message'], 1, hash('sha256', ($_SERVER['REMOTE_ADDR'] ?? 'unknown') . Env::get('APP_KEY', 'local'))]);
+    $_SESSION['last_inquiry'] = time();
+    unset($_SESSION['_old']);
+    $to = Env::get('INQUIRY_NOTIFICATION_EMAIL', $settings['email'] ?? '');
+    if ($to) @mail($to, 'Website inquiry: ' . $d['subject'], "From: {$d['full_name']} <{$d['email']}>\n\n{$d['message']}", 'From: ' . Env::get('MAIL_FROM_ADDRESS', $to));
+    flash('success', 'Thank you. Your inquiry has been received, and our team will be in touch.');
+    redirect('/contact');
+}
+if ($path === '/admin/login' && $method === 'GET') {
+    if (Auth::user()) redirect('/admin');
+    View::render('admin/login', ['title' => 'Administrator sign in'], 'layouts/admin');
+    return;
+}
+if ($path === '/admin/login' && $method === 'POST') {
+    verify_csrf();
+    if (Auth::attempt((string)($_POST['email'] ?? ''), (string)($_POST['password'] ?? ''))) redirect('/admin');
+    flash('error', 'The email address or password is incorrect.');
+    redirect('/admin/login');
+}
+if ($path === '/admin/logout' && $method === 'POST') {
+    verify_csrf();
+    Auth::logout();
+    redirect('/admin/login');
+}
+$public404 = function () use ($public) {
+    http_response_code(404);
+    $public('404', ['title' => 'Page not found']);
+};
+if (!str_starts_with($path, '/admin')) {
+    $public404();
+    return;
+}
+$user = Auth::requireAdmin();
+if ($path === '/admin') {
+    $title = 'Dashboard';
+    $counts = Database::connect()->query("SELECT type,COUNT(*) total FROM contents GROUP BY type")->fetchAll();
+    $inquiries = Database::connect()->query("SELECT * FROM inquiries ORDER BY created_at DESC LIMIT 5")->fetchAll();
+    View::render('admin/dashboard', compact('title', 'counts', 'inquiries', 'user'), 'layouts/admin');
+    return;
+}
+if ($path === '/admin/content') {
+    $type = preg_replace('/[^a-z_]/', '', (string)($_GET['type'] ?? 'service'));
+    $allowed = ['service', 'solution', 'industry', 'project', 'testimonial', 'faq'];
+    if (!in_array($type, $allowed, true)) $type = 'service';
+    $q = Database::connect()->prepare('SELECT * FROM contents WHERE type=? ORDER BY sort_order,title');
+    $q->execute([$type]);
+    View::render('admin/content', ['title' => 'Manage content', 'items' => $q->fetchAll(), 'type' => $type, 'user' => $user], 'layouts/admin');
+    return;
+}
+if ($path === '/admin/content/save' && $method === 'POST') {
+    verify_csrf();
+    $id = (int)($_POST['id'] ?? 0);
+    $type = (string)($_POST['type'] ?? 'service');
+    $title = trim((string)($_POST['title'] ?? ''));
+    $slug = strtolower(trim(preg_replace('/[^a-z0-9]+/i', '-', (string)($_POST['slug'] ?: $title)), '-'));
+    if ($title === '' || $slug === '') {
+        flash('error', 'Title and slug are required.');
+        redirect('/admin/content?type=' . $type);
+    }
+    $vals = [$type, $title, $slug, trim((string)($_POST['summary'] ?? '')), trim((string)($_POST['body'] ?? '')), in_array($_POST['status'] ?? 'draft', ['draft', 'published', 'archived'], true) ? $_POST['status'] : 'draft', (int)($_POST['sort_order'] ?? 0), isset($_POST['is_featured']) ? 1 : 0, trim((string)($_POST['meta_title'] ?? '')), trim((string)($_POST['meta_description'] ?? ''))];
+    if ($id) {
+        $vals[] = $id;
+        Database::connect()->prepare('UPDATE contents SET type=?,title=?,slug=?,summary=?,body=?,status=?,sort_order=?,is_featured=?,meta_title=?,meta_description=?,updated_at=CURRENT_TIMESTAMP WHERE id=?')->execute($vals);
+    } else {
+        Database::connect()->prepare('INSERT INTO contents(type,title,slug,summary,body,status,sort_order,is_featured,meta_title,meta_description,published_at) VALUES(?,?,?,?,?,?,?,?,?,?,CURRENT_TIMESTAMP)')->execute($vals);
+    }
+    flash('success', 'Content saved.');
+    redirect('/admin/content?type=' . $type);
+}
+if ($path === '/admin/content/delete' && $method === 'POST') {
+    verify_csrf();
+    Database::connect()->prepare('DELETE FROM contents WHERE id=?')->execute([(int)($_POST['id'] ?? 0)]);
+    flash('success', 'Content deleted.');
+    redirect('/admin/content?type=' . urlencode((string)($_POST['type'] ?? 'service')));
+}
+if ($path === '/admin/settings') {
+    if ($method === 'POST') {
+        verify_csrf();
+        $fields = ['company_name', 'tagline', 'phone_primary', 'phone_secondary', 'email', 'website'];
+        $values = [];
+        foreach ($fields as $field) $values[$field] = trim((string)($_POST[$field] ?? ''));
+        if ($values['company_name'] === '' || $values['tagline'] === '' || $values['phone_primary'] === '' || !filter_var($values['email'], FILTER_VALIDATE_EMAIL) || $values['website'] === '') {
+            flash('error', 'Complete all required settings with a valid email address.');
+            redirect('/admin/settings');
+        }
+        $save = Database::connect()->prepare('UPDATE settings SET value=?,updated_at=CURRENT_TIMESTAMP WHERE name=?');
+        foreach ($values as $name => $value) $save->execute([$value, $name]);
+        flash('success', 'Website settings updated.');
+        redirect('/admin/settings');
+    }
+    View::render('admin/settings', ['title' => 'Website settings', 'settings' => Content::settings(), 'user' => $user], 'layouts/admin');
+    return;
+}
+if ($path === '/admin/inquiries') {
+    if ($method === 'POST') {
+        verify_csrf();
+        $status = in_array($_POST['status'] ?? '', ['new', 'in_progress', 'resolved', 'spam'], true) ? $_POST['status'] : 'new';
+        Database::connect()->prepare('UPDATE inquiries SET status=?,updated_at=CURRENT_TIMESTAMP WHERE id=?')->execute([$status, (int)$_POST['id']]);
+        flash('success', 'Inquiry status updated.');
+        redirect('/admin/inquiries');
+    }
+    $items = Database::connect()->query('SELECT * FROM inquiries ORDER BY created_at DESC')->fetchAll();
+    View::render('admin/inquiries', ['title' => 'Contact inquiries', 'items' => $items, 'user' => $user], 'layouts/admin');
+    return;
+}
 $public404();
