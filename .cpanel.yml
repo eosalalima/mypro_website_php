@@ -1,0 +1,19 @@
+---
+# cPanel Git Version Control deployment configuration for the MyPro PHP site.
+#
+# This app is designed to live outside the public web root with the domain's
+# document root pointed at the deployed app's public/ directory. Update
+# APP_DEPLOYPATH below to the private directory for your cPanel account, then
+# configure the domain document root to: $APP_DEPLOYPATH/public
+#
+# Keep the production .env file and storage/ directory on the server; this file
+# intentionally excludes them from repository syncs.
+deployment:
+  tasks:
+    - export APP_DEPLOYPATH=$HOME/mypro_website_php/
+    - /bin/mkdir -p "$APP_DEPLOYPATH"
+    - /bin/mkdir -p "$APP_DEPLOYPATH/storage/logs" "$APP_DEPLOYPATH/storage/uploads"
+    - /usr/bin/rsync -a --delete --exclude='.git/' --exclude='.cpanel.yml' --exclude='.env' --exclude='storage/' ./ "$APP_DEPLOYPATH"
+    - cd "$APP_DEPLOYPATH" && /opt/cpanel/composer/bin/composer install --no-dev --classmap-authoritative --no-interaction --prefer-dist
+    - cd "$APP_DEPLOYPATH" && /usr/local/bin/php scripts/install.php
+    - /bin/chmod -R u+rwX,go-rwx "$APP_DEPLOYPATH/storage"
