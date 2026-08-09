@@ -18,27 +18,35 @@ final class Content
     {
         $key = 'published-' . hash('sha256', $type . ':' . ($limit ?? 'all'));
 
-        return self::remember($key, static function () use ($type, $limit): array {
-            $sql = "SELECT * FROM contents WHERE type=? AND status='published' AND (published_at IS NULL OR published_at<=CURRENT_TIMESTAMP) ORDER BY sort_order,title";
-            if ($limit !== null) {
-                $sql .= ' LIMIT ' . max(0, $limit);
-            }
-            $query = Database::connect()->prepare($sql);
-            $query->execute([$type]);
+        try {
+            return self::remember($key, static function () use ($type, $limit): array {
+                $sql = "SELECT * FROM contents WHERE type=? AND status='published' AND (published_at IS NULL OR published_at<=CURRENT_TIMESTAMP) ORDER BY sort_order,title";
+                if ($limit !== null) {
+                    $sql .= ' LIMIT ' . max(0, $limit);
+                }
+                $query = Database::connect()->prepare($sql);
+                $query->execute([$type]);
 
-            return $query->fetchAll();
-        });
+                return $query->fetchAll();
+            });
+        } catch (Throwable) {
+            $items = array_values(array_filter(DefaultContent::items(), static fn (array $item): bool => $item['type'] === $type));
+            return $limit === null ? $items : array_slice($items, 0, max(0, $limit));
+        }
     }
 
     public static function find(string $type, string $slug): ?array
     {
         $key = 'item-' . hash('sha256', $type . ':' . $slug);
-        $item = self::remember($key, static function () use ($type, $slug): array {
-            $query = Database::connect()->prepare("SELECT * FROM contents WHERE type=? AND slug=? AND status='published' LIMIT 1");
-            $query->execute([$type, $slug]);
-
-            return $query->fetch() ?: [];
-        });
+        try {
+            $item = self::remember($key, static function () use ($type, $slug): array {
+                $query = Database::connect()->prepare("SELECT * FROM contents WHERE type=? AND slug=? AND status='published' LIMIT 1");
+                $query->execute([$type, $slug]);
+                return $query->fetch() ?: [];
+            });
+        } catch (Throwable) {
+            $item = current(array_filter(DefaultContent::items(), static fn (array $item): bool => $item['type'] === $type && $item['slug'] === $slug)) ?: [];
+        }
 
         return $item ?: null;
     }
@@ -46,11 +54,12 @@ final class Content
     public static function settings(): array
     {
         try {
-            return self::remember('settings', static fn (): array => Database::connect()
+            $settings = self::remember('settings', static fn (): array => Database::connect()
                 ->query('SELECT name,value FROM settings')
                 ->fetchAll(PDO::FETCH_KEY_PAIR));
+            return array_replace(DefaultContent::settings(), $settings);
         } catch (Throwable) {
-            return [];
+            return DefaultContent::settings();
         }
     }
 
