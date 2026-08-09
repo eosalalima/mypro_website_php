@@ -1,7 +1,7 @@
 <?php
 
 declare(strict_types=1);
-require dirname(__DIR__) . '/mypro_website_php/app/bootstrap.php';
+require dirname(__DIR__) . '/app/bootstrap.php';
 
 use MyPro\{Auth, Content, Database, Env, View};
 
@@ -71,7 +71,13 @@ if ($path === '/contact' && $method === 'POST') {
         $public('contact', ['title' => 'Talk to an IT Expert', 'services' => Content::published('service'), 'errors' => $errors]);
         return;
     }
-    Database::connect()->prepare('INSERT INTO inquiries(full_name,company,email,phone,service,subject,message,consent,ip_hash) VALUES(?,?,?,?,?,?,?,?,?)')->execute([$d['full_name'], $d['company'], $d['email'], $d['phone'], $d['service'], $d['subject'], $d['message'], 1, hash('sha256', ($_SERVER['REMOTE_ADDR'] ?? 'unknown') . Env::get('APP_KEY', 'local'))]);
+    try {
+        Database::connect()->prepare('INSERT INTO inquiries(full_name,company,email,phone,service,subject,message,consent,ip_hash) VALUES(?,?,?,?,?,?,?,?,?)')->execute([$d['full_name'], $d['company'], $d['email'], $d['phone'], $d['service'], $d['subject'], $d['message'], 1, hash('sha256', ($_SERVER['REMOTE_ADDR'] ?? 'unknown') . Env::get('APP_KEY', 'local'))]);
+    } catch (Throwable) {
+        $_SESSION['_old'] = $d;
+        $public('contact', ['title' => 'Talk to an IT Expert', 'services' => Content::published('service'), 'errors' => ['form' => 'The inquiry service is temporarily unavailable. Please contact us by phone or email.']]);
+        return;
+    }
     $_SESSION['last_inquiry'] = time();
     unset($_SESSION['_old']);
     $settings = Content::settings();

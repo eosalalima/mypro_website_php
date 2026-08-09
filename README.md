@@ -61,6 +61,8 @@ PHP's `mail()` transport must be configured on the host for notifications. Inqui
 
 Public content and company settings are cached in `storage/cache`, so ordinary page views do not open a database connection on every request. CMS content/settings writes invalidate that cache immediately. Ensure `storage/` is writable by PHP in production.
 
+If the database is temporarily unavailable, public pages use the bundled portfolio content and contact settings instead of displaying a fatal error. Database-backed administration remains unavailable, and a contact-form submission shows a retry message rather than losing control of the page. Composer's generated autoloader is preferred, but the application also includes a small first-party autoload fallback so the public site can start before `composer install` on hosts where no third-party packages are required.
+
 ## Quality commands
 
 ```bash

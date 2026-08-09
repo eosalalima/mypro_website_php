@@ -24,4 +24,18 @@ $test('public content is cached and CMS invalidation refreshes it',function()use
 $test('password hashing and verification use PHP APIs',function()use($assert){$hash=password_hash('A-long-test-password!',PASSWORD_DEFAULT);$assert(password_verify('A-long-test-password!',$hash));$assert(!password_verify('wrong',$hash));});
 $test('HTML escaping prevents markup injection',function()use($assert){$assert(e('<script>alert(1)</script>')==='&lt;script&gt;alert(1)&lt;/script&gt;');});
 $test('sample claims are clearly identified',function()use($assert){$items=Content::published('project');$assert(str_starts_with($items[0]['title'],'Sample:'));$assert(str_contains($items[0]['body'],'sample content'));});
+$test('public content falls back when the database is unavailable',function()use($assert,$database){
+    $_ENV['DB_DSN']='unsupported-driver:unavailable';
+    Database::reset();
+    Content::clearCache();
+    $services=Content::published('service');
+    $item=Content::find('solution','enterprise-hcm');
+    $settings=Content::settings();
+    $assert(count($services)===5,'Expected the built-in services');
+    $assert($item !== null && $item['title']==='Enterprise HCM','Expected the built-in detail content');
+    $assert($settings['email']==='sales.myprosolinc@gmail.com','Expected the built-in settings');
+    $_ENV['DB_DSN']='sqlite:'.$database;
+    Database::reset();
+    Content::clearCache();
+});
 $failed=count(array_filter($tests,fn($x)=>!$x));echo "\n".count($tests)." tests, $failed failures.\n";exit($failed?1:0);
