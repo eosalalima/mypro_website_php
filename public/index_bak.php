@@ -1,7 +1,7 @@
 <?php
 
 declare(strict_types=1);
-require dirname(__DIR__) . '/mypro_website_php/app/bootstrap.php';
+require dirname(__DIR__) . '/app/bootstrap.php';
 
 use MyPro\{Auth, Content, Database, Env, View};
 
