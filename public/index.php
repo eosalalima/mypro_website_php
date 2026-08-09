@@ -7,9 +7,8 @@ use MyPro\{Auth, Content, Database, Env, View};
 
 $path = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
 $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
-$settings = Content::settings();
-$public = function (string $view, array $data = []) use ($settings) {
-    View::render('public/' . $view, array_merge(['settings' => $settings], $data));
+$public = function (string $view, array $data = []) {
+    View::render('public/' . $view, array_merge(['settings' => Content::settings()], $data));
 };
 if ($path === '/') {
     $public('home', ['title' => 'IT Solutions That Make Business Simpler', 'services' => Content::published('service'), 'solutions' => Content::published('solution', 3), 'industries' => Content::published('industry'), 'projects' => Content::published('project', 3), 'testimonials' => Content::published('testimonial', 3), 'faqs' => Content::published('faq')]);
@@ -75,6 +74,7 @@ if ($path === '/contact' && $method === 'POST') {
     Database::connect()->prepare('INSERT INTO inquiries(full_name,company,email,phone,service,subject,message,consent,ip_hash) VALUES(?,?,?,?,?,?,?,?,?)')->execute([$d['full_name'], $d['company'], $d['email'], $d['phone'], $d['service'], $d['subject'], $d['message'], 1, hash('sha256', ($_SERVER['REMOTE_ADDR'] ?? 'unknown') . Env::get('APP_KEY', 'local'))]);
     $_SESSION['last_inquiry'] = time();
     unset($_SESSION['_old']);
+    $settings = Content::settings();
     $to = Env::get('INQUIRY_NOTIFICATION_EMAIL', $settings['email'] ?? '');
     if ($to) @mail($to, 'Website inquiry: ' . $d['subject'], "From: {$d['full_name']} <{$d['email']}>\n\n{$d['message']}", 'From: ' . Env::get('MAIL_FROM_ADDRESS', $to));
     flash('success', 'Thank you. Your inquiry has been received, and our team will be in touch.');
@@ -138,12 +138,14 @@ if ($path === '/admin/content/save' && $method === 'POST') {
     } else {
         Database::connect()->prepare('INSERT INTO contents(type,title,slug,summary,body,status,sort_order,is_featured,meta_title,meta_description,published_at) VALUES(?,?,?,?,?,?,?,?,?,?,CURRENT_TIMESTAMP)')->execute($vals);
     }
+    Content::clearCache();
     flash('success', 'Content saved.');
     redirect('/admin/content?type=' . $type);
 }
 if ($path === '/admin/content/delete' && $method === 'POST') {
     verify_csrf();
     Database::connect()->prepare('DELETE FROM contents WHERE id=?')->execute([(int)($_POST['id'] ?? 0)]);
+    Content::clearCache();
     flash('success', 'Content deleted.');
     redirect('/admin/content?type=' . urlencode((string)($_POST['type'] ?? 'service')));
 }
@@ -159,6 +161,7 @@ if ($path === '/admin/settings') {
         }
         $save = Database::connect()->prepare('UPDATE settings SET value=?,updated_at=CURRENT_TIMESTAMP WHERE name=?');
         foreach ($values as $name => $value) $save->execute([$value, $name]);
+        Content::clearCache();
         flash('success', 'Website settings updated.');
         redirect('/admin/settings');
     }

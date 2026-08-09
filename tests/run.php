@@ -12,6 +12,15 @@ $test('database schema is installed',function()use($assert){$tables=Database::co
 $test('relative SQLite configuration resolves from project root',function()use($assert){$method=new ReflectionMethod(Database::class,'normalizeSqliteDsn');$method->setAccessible(true);$dsn=$method->invoke(null,'sqlite:storage/example.sqlite');$assert($dsn==='sqlite:'.dirname(__DIR__).'/storage/example.sqlite','Relative SQLite DSN was not normalized');});
 $test('five core services are published',function()use($assert){$services=Content::published('service');$assert(count($services)===5,'Expected exactly five seeded services');$assert($services[0]['slug']==='it-infrastructure');});
 $test('verified contact settings are centralized',function()use($assert){$s=Content::settings();$assert($s['email']==='sales.myprosolinc@gmail.com');$assert($s['phone_primary']==='+632 9177936188');});
+$test('public content is cached and CMS invalidation refreshes it',function()use($assert){
+    $before=Content::published('service');
+    Database::connect()->prepare("UPDATE contents SET title='Updated service' WHERE type='service' AND slug='it-infrastructure'")->execute();
+    $cached=Content::published('service');
+    $assert($cached[0]['title']===$before[0]['title'],'Expected the request cache to avoid another query');
+    Content::clearCache();
+    $fresh=Content::published('service');
+    $assert($fresh[0]['title']==='Updated service','Expected invalidation to refresh cached content');
+});
 $test('password hashing and verification use PHP APIs',function()use($assert){$hash=password_hash('A-long-test-password!',PASSWORD_DEFAULT);$assert(password_verify('A-long-test-password!',$hash));$assert(!password_verify('wrong',$hash));});
 $test('HTML escaping prevents markup injection',function()use($assert){$assert(e('<script>alert(1)</script>')==='&lt;script&gt;alert(1)&lt;/script&gt;');});
 $test('sample claims are clearly identified',function()use($assert){$items=Content::published('project');$assert(str_starts_with($items[0]['title'],'Sample:'));$assert(str_contains($items[0]['body'],'sample content'));});

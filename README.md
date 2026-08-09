@@ -55,8 +55,11 @@ Create the `mypro` database in phpMyAdmin, save these values in `.env`, and run 
 | `ADMIN_NAME`, `ADMIN_EMAIL`, `ADMIN_PASSWORD` | Initial admin provisioned by the CLI only |
 | `MAIL_FROM_ADDRESS`, `INQUIRY_NOTIFICATION_EMAIL` | Inquiry notification delivery |
 | `SESSION_SECURE` | Set `true` when production uses HTTPS |
+| `CONTENT_CACHE_TTL` | Seconds to cache public content/settings on disk (default: `300`; use `0` to disable) |
 
 PHP's `mail()` transport must be configured on the host for notifications. Inquiry storage succeeds even when a development machine has no mail transport. Use an authenticated relay at the server level for reliable production delivery.
+
+Public content and company settings are cached in `storage/cache`, so ordinary page views do not open a database connection on every request. CMS content/settings writes invalidate that cache immediately. Ensure `storage/` is writable by PHP in production.
 
 ## Quality commands
 

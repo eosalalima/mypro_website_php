@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 require dirname(__DIR__).'/app/bootstrap.php';
-use MyPro\{Database,Env};
+use MyPro\{Content,Database,Env};
 $pdo=Database::connect(); $driver=$pdo->getAttribute(PDO::ATTR_DRIVER_NAME); $auto=$driver==='mysql'?'BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY':'INTEGER PRIMARY KEY AUTOINCREMENT';
 $pdo->exec("CREATE TABLE IF NOT EXISTS users (id $auto, name VARCHAR(120) NOT NULL, email VARCHAR(190) NOT NULL UNIQUE, password VARCHAR(255) NOT NULL, role VARCHAR(30) NOT NULL DEFAULT 'admin', created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)");
 $pdo->exec("CREATE TABLE IF NOT EXISTS contents (id $auto, type VARCHAR(40) NOT NULL, title VARCHAR(190) NOT NULL, slug VARCHAR(190) NOT NULL, summary TEXT, body TEXT, image VARCHAR(255), status VARCHAR(20) NOT NULL DEFAULT 'draft', sort_order INTEGER NOT NULL DEFAULT 0, is_featured INTEGER NOT NULL DEFAULT 0, meta_title VARCHAR(190), meta_description VARCHAR(255), published_at TIMESTAMP NULL, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, UNIQUE(type,slug))");
@@ -30,4 +30,5 @@ $items=[
 ['faq','How do we start a consultation?','start-consultation','Tell us about your objectives and current environment.','Send an inquiry through the contact form. A MyPro representative can then clarify scope, priorities, and next steps.']];
 $check=$pdo->prepare('SELECT COUNT(*) FROM contents WHERE type=? AND slug=?');$add=$pdo->prepare("INSERT INTO contents(type,title,slug,summary,body,status,sort_order,is_featured,published_at) VALUES(?,?,?,?,?,'published',?, ?, CURRENT_TIMESTAMP)"); foreach($items as $i=>$x){$check->execute([$x[0],$x[2]]);if(!$check->fetchColumn())$add->execute([$x[0],$x[1],$x[2],$x[3],$x[4],$i,($x[0]==='service'||$x[0]==='solution')?1:0]);}
 $email=Env::get('ADMIN_EMAIL');$password=Env::get('ADMIN_PASSWORD');if($email&&$password){$q=$pdo->prepare('SELECT COUNT(*) FROM users WHERE email=?');$q->execute([strtolower($email)]);if(!$q->fetchColumn()){$pdo->prepare('INSERT INTO users(name,email,password,role) VALUES(?,?,?,?)')->execute([Env::get('ADMIN_NAME','MyPro Administrator'),strtolower($email),password_hash($password,PASSWORD_DEFAULT),'admin']);echo "Administrator created.\n";}}
+Content::clearCache();
 echo "Database installed and portfolio content seeded.\n";
