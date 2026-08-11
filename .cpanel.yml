@@ -14,6 +14,7 @@ deployment:
     - /bin/mkdir -p "$APP_DEPLOYPATH"
     - /bin/mkdir -p "$APP_DEPLOYPATH/storage/logs" "$APP_DEPLOYPATH/storage/uploads"
     - /usr/bin/rsync -a --delete --exclude='.git/' --exclude='.cpanel.yml' --exclude='.env' --exclude='storage/' ./ "$APP_DEPLOYPATH"
-    - cd "$APP_DEPLOYPATH" && /opt/cpanel/composer/bin/composer install --no-dev --classmap-authoritative --no-interaction --prefer-dist
-    - cd "$APP_DEPLOYPATH" && /usr/local/bin/php scripts/install.php
+    - if [ -x /opt/cpanel/composer/bin/composer ]; then cd "$APP_DEPLOYPATH" && /opt/cpanel/composer/bin/composer install --no-dev --classmap-authoritative --no-interaction --prefer-dist; else echo "Composer is unavailable; using the bundled plain-PHP autoloader."; fi
+    - cd "$APP_DEPLOYPATH" && php scripts/install.php
+    - cd "$APP_DEPLOYPATH" && php scripts/cpanel-check.php
     - /bin/chmod -R u+rwX,go-rwx "$APP_DEPLOYPATH/storage"

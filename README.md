@@ -16,7 +16,7 @@ Unverified project and testimonial records are prominently marked **Sample** and
 ## Requirements
 
 - PHP **8.2.12** with PDO and the PDO driver for SQLite or MySQL/MariaDB
-- Composer 2 (autoload generation only; there are no third-party runtime packages)
+- Composer 2 is optional (it only optimizes autoloading; there are no third-party runtime packages)
 - Apache with `mod_rewrite`, Nginx, or another server configured to route unknown paths to `public/index.php`
 
 ## Local installation
@@ -88,11 +88,13 @@ Uploaded media is intentionally not enabled in this framework-free baseline. Put
 ### Standard server or cPanel
 
 1. Keep the repository outside the public web root and point the domain document root to its `public/` directory. On restricted cPanel, expose only the contents of `public/` and adjust the `dirname(__DIR__)` application path in `index.php` to the private repository.
-2. Run `composer install --no-dev --classmap-authoritative` in the private application directory.
+2. Optionally run `composer install --no-dev --classmap-authoritative` in the private application directory. If cPanel does not provide Composer, the bundled plain-PHP autoloader works without it.
 3. Create `.env` outside source control, set a MySQL DSN, a random 64+ character `APP_KEY`, `APP_DEBUG=false`, the production HTTPS URL, and `SESSION_SECURE=true`.
 4. Run `php scripts/install.php`, then `php scripts/create-admin.php`. Remove `ADMIN_PASSWORD` from `.env` after provisioning.
 5. Ensure `storage/` is writable by PHP but not publicly accessible. Configure Apache rewrites from `public/.htaccess` or the equivalent Nginx `try_files $uri $uri/ /index.php?$query_string` rule.
 6. Enforce HTTPS, security headers, PHP error logging, least-privilege database credentials, and a supported PHP 8.2 patch stream. Configure the host mail transport.
+
+The included `.cpanel.yml` performs these deployment steps for cPanel Git Version Control. Change its `APP_DEPLOYPATH` value before enabling deployment. It preserves the server's `.env` and `storage/`, treats Composer as optional, initializes the schema, and runs `php scripts/cpanel-check.php`. The readiness check fails deployment when the PHP version, extensions, private environment, writable directories, database driver, or connection are not usable; production-hardening issues are reported as warnings.
 
 ### Operations
 
