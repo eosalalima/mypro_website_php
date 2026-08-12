@@ -12,7 +12,7 @@ deployment:
   tasks:
     - export APP_DEPLOYPATH=$HOME/mypro_website_php/
     - /bin/mkdir -p "$APP_DEPLOYPATH"
-    - /bin/mkdir -p "$APP_DEPLOYPATH/storage/logs" "$APP_DEPLOYPATH/storage/uploads"
+    - /bin/mkdir -p "$APP_DEPLOYPATH/storage/cache" "$APP_DEPLOYPATH/storage/logs" "$APP_DEPLOYPATH/storage/uploads"
     - /usr/bin/rsync -a --delete --exclude='.git/' --exclude='.cpanel.yml' --exclude='.env' --exclude='storage/' ./ "$APP_DEPLOYPATH"
     - if [ -x /opt/cpanel/composer/bin/composer ]; then cd "$APP_DEPLOYPATH" && /opt/cpanel/composer/bin/composer install --no-dev --classmap-authoritative --no-interaction --prefer-dist; else echo "Composer is unavailable; using the bundled plain-PHP autoloader."; fi
     - cd "$APP_DEPLOYPATH" && php scripts/install.php

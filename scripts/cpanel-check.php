@@ -44,6 +44,12 @@ foreach (['storage', 'storage/cache', 'storage/logs', 'storage/uploads'] as $dir
 if (Env::bool('APP_DEBUG', false)) {
     $warnings[] = 'APP_DEBUG is enabled; set APP_DEBUG=false for production.';
 }
+if ((Env::get('APP_ENV', '') ?? '') !== 'production') {
+    $warnings[] = 'APP_ENV should be set to production.';
+}
+if (filter_var(ini_get('display_errors'), FILTER_VALIDATE_BOOLEAN)) {
+    $warnings[] = 'PHP display_errors is enabled; disable it and log errors privately in production.';
+}
 if (!Env::bool('SESSION_SECURE', false)) {
     $warnings[] = 'SESSION_SECURE is disabled; enable it after HTTPS is active.';
 }

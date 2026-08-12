@@ -22,6 +22,7 @@ $test('public content is cached and CMS invalidation refreshes it',function()use
     $assert($fresh[0]['title']==='Updated service','Expected invalidation to refresh cached content');
 });
 $test('password hashing and verification use PHP APIs',function()use($assert){$hash=password_hash('A-long-test-password!',PASSWORD_DEFAULT);$assert(password_verify('A-long-test-password!',$hash));$assert(!password_verify('wrong',$hash));});
+$test('installer enforces the administrator password minimum',function()use($assert){$installer=file_get_contents(dirname(__DIR__).'/scripts/install.php');$assert($installer!==false&&preg_match('/strlen\(\$password\)\s*<\s*12/',$installer)===1,'Installer must reject short provisioning passwords');});
 $test('HTML escaping prevents markup injection',function()use($assert){$assert(e('<script>alert(1)</script>')==='&lt;script&gt;alert(1)&lt;/script&gt;');});
 $test('sample claims are clearly identified',function()use($assert){$items=Content::published('project');$assert(str_starts_with($items[0]['title'],'Sample:'));$assert(str_contains($items[0]['body'],'sample content'));});
 $test('public content falls back when the database is unavailable',function()use($assert,$database){
